@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Twibbon ORIABA 2025</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background: #f0f4f8;
+    }
+    h1 {
+      margin-top: 20px;
+    }
+    #preview {
+      margin: 20px auto;
+      display: block;
+      border: 2px solid #ccc;
+      border-radius: 10px;
+    }
+    .btn {
+      margin: 10px;
+      padding: 10px 20px;
+      border: none;
+      background: #2d6cdf;
+      color: white;
+      font-size: 16px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .btn:hover {
+      background: #1a4eb8;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Twibbon ORIABA 2025</h1>
+  <p>Upload fotomu untuk dipasang ke Twibbon!</p>
+  
+  <input type="file" id="upload" accept="image/*" class="btn">
+  <br>
+  <canvas id="preview" width="800" height="1000"></canvas>
+  <br>
+  <button id="download" class="btn">Download Hasil</button>
+
+  <script>
+    const upload = document.getElementById('upload');
+    const canvas = document.getElementById('preview');
+    const ctx = canvas.getContext('2d');
+    const twibbon = new Image();
+    twibbon.src = "twibon.jpg"; // nama file twibbon
+
+    upload.addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        const img = new Image();
+        img.onload = function() {
+          // Bersihkan canvas
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+          // Gambar foto user biar penuh di canvas
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+          // Tempel twibbon di atasnya
+          ctx.drawImage(twibbon, 0, 0, canvas.width, canvas.height);
+        }
+        img.src = event.target.result;
+      }
+      reader.readAsDataURL(file);
+    });
+
+    document.getElementById('download').addEventListener('click', function() {
+      const link = document.createElement('a');
+      link.download = 'twibbon_oriaba2025.png';
+      link.href = canvas.toDataURL("image/png");
+      link.click();
+    });
+  </script>
+
+</body>
+</html>
