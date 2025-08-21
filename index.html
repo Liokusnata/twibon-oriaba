@@ -18,6 +18,7 @@
       display: block;
       border: 2px solid #ccc;
       border-radius: 10px;
+      cursor: grab;
     }
     .btn {
       margin: 10px;
@@ -37,7 +38,7 @@
 <body>
 
   <h1>Twibbon ORIABA 2025</h1>
-  <p>Upload fotomu untuk dipasang ke Twibbon!</p>
+  <p>Upload fotomu untuk dipasang ke Twibbon! (Bisa digeser & dizoom)</p>
   
   <input type="file" id="upload" accept="image/*" class="btn">
   <br>
@@ -50,29 +51,86 @@
     const canvas = document.getElementById('preview');
     const ctx = canvas.getContext('2d');
     const twibbon = new Image();
-    twibbon.src = "twibon.jpg"; // nama file twibbon
+    twibbon.src = "twibon.jpg"; // file twibbon
+
+    let img = null;
+    let imgX = 0, imgY = 0; // posisi awal
+    let scale = 1;          // zoom awal
+    let isDragging = false;
+    let startX, startY;
+
+    function drawAll() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      if (img) {
+        const w = img.width * scale;
+        const h = img.height * scale;
+        ctx.drawImage(img, imgX, imgY, w, h);
+      }
+      ctx.drawImage(twibbon, 0, 0, canvas.width, canvas.height);
+    }
 
     upload.addEventListener('change', function(e) {
       const file = e.target.files[0];
       if (!file) return;
       const reader = new FileReader();
       reader.onload = function(event) {
-        const img = new Image();
+        img = new Image();
         img.onload = function() {
-          // Bersihkan canvas
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-          // Gambar foto user biar penuh di canvas
-          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-          // Tempel twibbon di atasnya
-          ctx.drawImage(twibbon, 0, 0, canvas.width, canvas.height);
+          // reset posisi dan scale
+          scale = Math.max(canvas.width / img.width, canvas.height / img.height);
+          imgX = (canvas.width - img.width * scale) / 2;
+          imgY = (canvas.height - img.height * scale) / 2;
+          drawAll();
         }
         img.src = event.target.result;
       }
       reader.readAsDataURL(file);
     });
 
+    // Drag untuk geser
+    canvas.addEventListener('mousedown', (e) => {
+      isDragging = true;
+      startX = e.offsetX;
+      startY = e.offsetY;
+      canvas.style.cursor = "grabbing";
+    });
+    canvas.addEventListener('mouseup', () => {
+      isDragging = false;
+      canvas.style.cursor = "grab";
+    });
+    canvas.addEventListener('mouseleave', () => {
+      isDragging = false;
+      canvas.style.cursor = "grab";
+    });
+    canvas.addEventListener('mousemove', (e) => {
+      if (!isDragging || !img) return;
+      const dx = e.offsetX - startX;
+      const dy = e.offsetY - startY;
+      imgX += dx;
+      imgY += dy;
+      startX = e.offsetX;
+      startY = e.offsetY;
+      drawAll();
+    });
+
+    // Scroll untuk zoom
+    canvas.addEventListener('wheel', (e) => {
+      if (!img) return;
+      e.preventDefault();
+      const zoomAmount = e.deltaY * -0.001;
+      const oldScale = scale;
+      scale = Math.min(Math.max(0.1, scale + zoomAmount), 5);
+
+      // zoom dengan fokus di posisi mouse
+      const mx = e.offsetX;
+      const my = e.offsetY;
+      imgX = mx - (mx - imgX) * (scale / oldScale);
+      imgY = my - (my - imgY) * (scale / oldScale);
+
+      drawAll();
+    });
+
+    // Download hasil
     document.getElementById('download').addEventListener('click', function() {
       const link = document.createElement('a');
       link.download = 'twibbon_oriaba2025.png';
